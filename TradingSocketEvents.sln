@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketEvents", "TradingSocketEvents\TradingSocketEvents.csproj", "{91E71A82-74E8-4378-8C01-BC419535B03D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketClient", "TradingSocketClient\TradingSocketClient.csproj", "{93356F57-273E-4979-B5DE-22474FDA05D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketApp", "TradingSocketApp\TradingSocketApp.csproj", "{B03BC766-8F39-46C2-B7F0-3A2F1681415B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91E71A82-74E8-4378-8C01-BC419535B03D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91E71A82-74E8-4378-8C01-BC419535B03D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91E71A82-74E8-4378-8C01-BC419535B03D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91E71A82-74E8-4378-8C01-BC419535B03D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93356F57-273E-4979-B5DE-22474FDA05D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93356F57-273E-4979-B5DE-22474FDA05D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93356F57-273E-4979-B5DE-22474FDA05D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93356F57-273E-4979-B5DE-22474FDA05D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B03BC766-8F39-46C2-B7F0-3A2F1681415B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B03BC766-8F39-46C2-B7F0-3A2F1681415B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B03BC766-8F39-46C2-B7F0-3A2F1681415B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B03BC766-8F39-46C2-B7F0-3A2F1681415B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
