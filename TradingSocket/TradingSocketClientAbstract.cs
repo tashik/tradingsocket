@@ -2,8 +2,8 @@ using System.Net.WebSockets;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using TradingSocket.Deribit.EventHandlers;
 using TradingSocket.Entities;
-using TradingSocket.Events;
 using TradingSocket.Helpers;
 
 namespace TradingSocket;
@@ -11,27 +11,27 @@ namespace TradingSocket;
 public abstract class TradingSocketClientAbstract : ITradingSocketClient
 {
     private ClientWebSocket _webSocket;
-    protected readonly string _clientId;
-    protected readonly string _clientSecret;
+    protected readonly string ClientId;
+    protected readonly string ClientSecret;
     private readonly string _wsUrl;
-    private string? _accessToken;
+    protected string? AccessToken;
     private const int ReconnectDelayMs = 5000;
     private readonly CancellationTokenSource _connectionCancellationTokenSource;
     private CancellationTokenSource _receivingCancellationTokenSource;
     
-    private readonly TradingSocketEventDispatcher _eventDispatcher;
-    protected readonly MessageIndexer _msgIndexer;
+    protected readonly TradingSocketEventDispatcher EventDispatcher;
+    protected readonly MessageIndexer MsgIndexer;
 
-    protected readonly MessageRegistry _messageRegistry;
+    protected readonly MessageRegistry MsgRegistry;
 
-    public TradingSocketClientAbstract(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry messageRegistry, MessageIndexer indexer)
+    public TradingSocketClientAbstract(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer)
     {
-        _eventDispatcher = eventDispatcher;
-        _msgIndexer = indexer;
-        _messageRegistry = messageRegistry;
+        EventDispatcher = eventDispatcher;
+        MsgIndexer = indexer;
+        MsgRegistry = msgRegistry;
         _webSocket = new ClientWebSocket();
-        _clientId = connectionConfig.ClientId;
-        _clientSecret = connectionConfig.ClientSecret;
+        ClientId = connectionConfig.ClientId;
+        ClientSecret = connectionConfig.ClientSecret;
         _wsUrl = connectionConfig.WsUrl;
         _connectionCancellationTokenSource = new CancellationTokenSource();
         _receivingCancellationTokenSource = new CancellationTokenSource();
@@ -54,7 +54,7 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
             {
                 await _webSocket.ConnectAsync(uri, cancellationToken);
                 StartReceiving();
-                Log.Information("Connected to " + GetClientName() + " WebSocket API.");
+                Log.Information("Connected to {ClientName} WebSocket API.", GetClientName());
                 if (IsAccessTokenRequired())
                 {
                     await AuthenticateAsync(cancellationToken);
@@ -62,18 +62,18 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
             }
             catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
             {
-                Log.Warning("Connection attempt canceled.");
+                Log.Warning("{ClientName}: Connection attempt canceled.", GetClientName());
                 throw;
             }
             catch (Exception ex)
             {
                 if (linkedTokenSource.Token.IsCancellationRequested)
                 {
-                    Log.Warning("Connection attempt canceled.");
+                    Log.Warning("{ClientName}: Connection attempt canceled.", GetClientName());
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                Log.Warning($"Connection failed: {ex.Message}. Retrying in {ReconnectDelayMs / 1000} seconds...");
+                Log.Warning("{ClientName}: Connection failed: {Message}. Retrying in {DelayMs} seconds...", GetClientName(), ex.Message, ReconnectDelayMs / 1000);
                 await Task.Delay(ReconnectDelayMs, cancellationToken);
             }
         }
@@ -104,12 +104,12 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
         }
         catch (Exception ex) when (ex is OperationCanceledException || ex is TaskCanceledException)
         {
-            Log.Warning("Send attempt canceled.");
+            Log.Warning("{ClientName}: Send attempt canceled.", GetClientName());
             throw;
         }
         catch (Exception ex)
         {
-            Log.Error($"Send failed: {ex.Message}");
+            Log.Error("{ClientName}: Send failed: {Message}", GetClientName(), ex.Message);
             // Handle send failure (e.g., reconnect)
         }
     }
@@ -125,50 +125,39 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Log.Information($"Received: {message}");
+                    Log.Information("{ClientName}: Received: {Message}", GetClientName(), message);
                     
                     await ProcessResponseAsync(message);
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    Log.Warning("WebSocket connection closed. Attempting to reconnect...");
+                    Log.Warning("WebSocket {ClientName} connection closed. Attempting to reconnect...", GetClientName());
                     await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken);
                     await ReconnectAsync(cancellationToken);
                 }
             }
             catch (Exception ex) when (ex is OperationCanceledException || ex is TaskCanceledException)
             {
-                Log.Warning("Receive operation canceled.");
+                Log.Warning("{ClientName}: Receive operation canceled.", GetClientName());
                 throw;
             }
             catch (Exception ex)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Log.Warning("Receive operation canceled.");
+                    Log.Warning("{ClientName}: Receive operation canceled.", GetClientName());
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                Log.Error($"Receive failed: {ex.Message}. Attempting to reconnect...");
+                Log.Error("{ClientName} Receive failed: {Message}. Attempting to reconnect...", GetClientName(), ex.Message);
                 await ReconnectAsync(cancellationToken);
             }
         }
     }
 
     protected abstract Task ProcessResponseAsync(string message);
-    
-    protected async Task OnNewMessage(JToken? data, string args, int id)
-    {
-        _messageRegistry.TryGetRequestType(id, out var requestType);
-        var jReq = new SocketResponse()
-        {
-           DataObject = data,
-           Args = args,
-           RequestType = requestType
-        };
-       
-        await _eventDispatcher.DispatchAsync(new MessageArrivedEvent(jReq));
-    }
+
+    protected abstract Task OnNewMessage(JToken? data, string args, int id);
 
     private void ResetWebsocket()
     {
@@ -206,7 +195,7 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
     {
         _connectionCancellationTokenSource?.Cancel();
         ResetWebsocket();
-        Log.Information("Socket client stopped");
+        Log.Information("Socket {ClientName} client stopped", GetClientName());
     }
     
 }

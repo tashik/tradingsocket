@@ -2,9 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using TradingSocket.Deribit;
-using TradingSocket.Deribit.EventHandlers;
+using DeribitEventHandlers = TradingSocket.Deribit.EventHandlers;
+using OkxEventHandlers = TradingSocket.Okx.EventHandlers;
 using TradingSocket.Entities;
-using TradingSocket.Events;
 using TradingSocket.Helpers;
 using TradingSocket.Okx;
 using TradingSocketEvents;
@@ -30,7 +30,6 @@ public class TradingSocketServiceConfiguration
         serviceCollection.AddSingleton<TradingSocketEventDispatcher>();
         serviceCollection.AddSingleton<MessageRegistry>();
         serviceCollection.AddSingleton<MessageIndexer>();
-        serviceCollection.AddTransient<IDomainEventHandler<MessageArrivedEvent>, MessageArrivedEventHandler>();
         
         var connectorSettings = _configuration.GetSection("ConnectorSettings").Get<List<ConnectionConfig>>();
         if (connectorSettings == null)
@@ -41,19 +40,19 @@ public class TradingSocketServiceConfiguration
         var clients = new Dictionary<ExchangeType, ITradingSocketClient>();
         var messageIndexer = serviceCollection.BuildServiceProvider().GetRequiredService<MessageIndexer>();
         var messageRegistry = serviceCollection.BuildServiceProvider().GetRequiredService<MessageRegistry>();
-        var eventDispatcher = serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>();
 
         foreach (var setting in connectorSettings)
         {
             switch (setting.Exchange.ToLower())
             {
                 case "deribit":
-                    clients.Add(ExchangeType.Deribit, new DeribitSocketClient(setting, eventDispatcher, messageRegistry, messageIndexer));
+                    serviceCollection.AddTransient<IDomainEventHandler<DeribitEventHandlers.MessageArrivedEvent>, DeribitEventHandlers.MessageArrivedEventHandler>();
+                    clients.Add(ExchangeType.Deribit, new DeribitSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer));
                     break;
                 case "okx":
-                    clients.Add(ExchangeType.Okx, new OkxSocketClient(setting, eventDispatcher, messageRegistry, messageIndexer));
+                    serviceCollection.AddTransient<IDomainEventHandler<OkxEventHandlers.MessageArrivedEvent>, OkxEventHandlers.MessageArrivedEventHandler>();
+                    clients.Add(ExchangeType.Okx, new OkxSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer));
                     break;
-                // Add more clients here
                 default:
                     throw new InvalidOperationException($"Unsupported exchange: {setting.Exchange}");
             }

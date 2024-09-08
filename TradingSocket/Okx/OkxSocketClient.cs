@@ -1,12 +1,15 @@
+using Newtonsoft.Json.Linq;
 using Serilog;
+using TradingSocket.Entities;
 using TradingSocket.Helpers;
+using OkxEventHandlers = TradingSocket.Deribit.EventHandlers;
 
 namespace TradingSocket.Okx;
 
 public class OkxSocketClient : TradingSocketClientAbstract
 {
-    public OkxSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry messageRegistry, MessageIndexer indexer)
-    : base(connectionConfig, eventDispatcher, messageRegistry, indexer) {}
+    public OkxSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer)
+    : base(connectionConfig, eventDispatcher, msgRegistry, indexer) {}
 
 
     protected override string GetClientName()
@@ -49,5 +52,18 @@ public class OkxSocketClient : TradingSocketClientAbstract
     protected override Task AuthenticateAsync(CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
+    }
+    
+    protected override async Task OnNewMessage(JToken? data, string args, int id)
+    {
+        MsgRegistry.TryGetRequestType(id, out var requestType);
+        var jReq = new SocketResponse()
+        {
+            DataObject = data,
+            Args = args,
+            RequestType = requestType
+        };
+       
+        await EventDispatcher.DispatchAsync(new OkxEventHandlers.MessageArrivedEvent(jReq));
     }
 }

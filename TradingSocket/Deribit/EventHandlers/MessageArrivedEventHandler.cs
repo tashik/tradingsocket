@@ -2,7 +2,6 @@ using Serilog;
 using TradingSocket.Deribit.Entities;
 using TradingSocket.Deribit.Factories;
 using TradingSocket.Entities;
-using TradingSocket.Events;
 
 namespace TradingSocket.Deribit.EventHandlers;
 

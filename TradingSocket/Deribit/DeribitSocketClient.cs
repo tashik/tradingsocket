@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using Serilog;
 using TradingSocket.Entities;
 using TradingSocket.Helpers;
+using DeribitEventHandlers = TradingSocket.Deribit.EventHandlers;
 
 namespace TradingSocket.Deribit;
 
@@ -10,7 +11,7 @@ public class DeribitSocketClient : TradingSocketClientAbstract
     
     private string? _accessToken;
 
-    public DeribitSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry messageRegistry, MessageIndexer indexer) : base(connectionConfig, eventDispatcher, messageRegistry, indexer)
+    public DeribitSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer) : base(connectionConfig, eventDispatcher, msgRegistry, indexer)
     {
     }
 
@@ -30,7 +31,7 @@ public class DeribitSocketClient : TradingSocketClientAbstract
         {
             throw new InvalidOperationException("Client is not authenticated.");
         }
-        var msgId = _msgIndexer.GetIndex();
+        var msgId = MsgIndexer.GetIndex();
         var subscribeMessage = new
         {
             jsonrpc = "2.0",
@@ -41,14 +42,14 @@ public class DeribitSocketClient : TradingSocketClientAbstract
             },
             id = msgId
         };
-        _messageRegistry.RegisterRequest(msgId, SocketRequest.Subscribe);
+        MsgRegistry.RegisterRequest(msgId, SocketRequest.Subscribe);
         var message = Newtonsoft.Json.JsonConvert.SerializeObject(subscribeMessage);
         await SendAsync(message, cancellationToken);
     }
 
     public override async Task SubscribeToTickerAsync(string instrumentName, CancellationToken cancellationToken)
     {
-        var msgId = _msgIndexer.GetIndex();
+        var msgId = MsgIndexer.GetIndex();
         var subscribeMessage = new
         {
             jsonrpc = "2.0",
@@ -59,7 +60,7 @@ public class DeribitSocketClient : TradingSocketClientAbstract
             },
             id = msgId
         };
-        _messageRegistry.RegisterRequest(msgId, SocketRequest.Subscribe);
+        MsgRegistry.RegisterRequest(msgId, SocketRequest.Subscribe);
         var message = Newtonsoft.Json.JsonConvert.SerializeObject(subscribeMessage);
         await SendAsync(message, cancellationToken);
     }
@@ -67,7 +68,7 @@ public class DeribitSocketClient : TradingSocketClientAbstract
 
     protected override async Task AuthenticateAsync(CancellationToken cancellationToken)
     {
-        var msgId = _msgIndexer.GetIndex();
+        var msgId = MsgIndexer.GetIndex();
         var authRequest = new
         {
             jsonrpc = "2.0",
@@ -75,12 +76,12 @@ public class DeribitSocketClient : TradingSocketClientAbstract
             @params = new
             {
                 grant_type = "client_credentials",
-                client_id = _clientId,
-                client_secret = _clientSecret
+                client_id = ClientId,
+                client_secret = ClientSecret
             },
             id = msgId
         };
-        _messageRegistry.RegisterRequest(msgId, SocketRequest.Authenticate);
+        MsgRegistry.RegisterRequest(msgId, SocketRequest.Authenticate);
         var message = Newtonsoft.Json.JsonConvert.SerializeObject(authRequest);
         await SendAsync(message, cancellationToken);
     }
@@ -94,5 +95,18 @@ public class DeribitSocketClient : TradingSocketClientAbstract
         {
             await OnNewMessage(resultWrapper, message, msgId.ToObject<int>());
         }
+    }
+    
+    protected override async Task OnNewMessage(JToken? data, string args, int id)
+    {
+        MsgRegistry.TryGetRequestType(id, out var requestType);
+        var jReq = new SocketResponse()
+        {
+            DataObject = data,
+            Args = args,
+            RequestType = requestType
+        };
+       
+        await EventDispatcher.DispatchAsync(new DeribitEventHandlers.MessageArrivedEvent(jReq));
     }
 }

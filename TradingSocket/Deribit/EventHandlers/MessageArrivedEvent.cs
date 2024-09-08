@@ -1,6 +1,6 @@
 using TradingSocket.Entities;
 
-namespace TradingSocket.Events;
+namespace TradingSocket.Deribit.EventHandlers;
 
 public class MessageArrivedEvent: IDomainEvent
 {
