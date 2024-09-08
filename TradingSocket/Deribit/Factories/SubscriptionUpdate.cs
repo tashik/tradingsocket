@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using TradingSocketClient.Deribit.Entities;
+using TradingSocket.Deribit.Entities;
 
-namespace TradingSocketClient.Deribit.Factories;
+namespace TradingSocket.Deribit.Factories;
 
 public interface ISubscriptionUpdate
 {

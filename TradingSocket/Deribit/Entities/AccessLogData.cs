@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace TradingSocketClient.Deribit.Entities;
+namespace TradingSocket.Deribit.Entities;
 
 
 public class AccessLogData : ISubscriptionData

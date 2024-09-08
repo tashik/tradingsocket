@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketEvents", "TradingSocketEvents\TradingSocketEvents.csproj", "{91E71A82-74E8-4378-8C01-BC419535B03D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketClient", "TradingSocketClient\TradingSocketClient.csproj", "{93356F57-273E-4979-B5DE-22474FDA05D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocket", "TradingSocket\TradingSocket.csproj", "{93356F57-273E-4979-B5DE-22474FDA05D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingSocketApp", "TradingSocketApp\TradingSocketApp.csproj", "{B03BC766-8F39-46C2-B7F0-3A2F1681415B}"
 EndProject
