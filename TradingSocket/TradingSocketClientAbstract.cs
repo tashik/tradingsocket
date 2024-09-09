@@ -5,15 +5,18 @@ using Serilog;
 using TradingSocket.Deribit.EventHandlers;
 using TradingSocket.Entities;
 using TradingSocket.Helpers;
+using TradingSocketEvents.Domain;
 
 namespace TradingSocket;
 
 public abstract class TradingSocketClientAbstract : ITradingSocketClient
 {
     private ClientWebSocket _webSocket;
+    private HttpClient _httpClient;
     protected readonly string ClientId;
     protected readonly string ClientSecret;
     private readonly string _wsUrl;
+    protected readonly string RestApiUrl;
     protected string? AccessToken;
     private const int ReconnectDelayMs = 5000;
     private readonly CancellationTokenSource _connectionCancellationTokenSource;
@@ -24,15 +27,17 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
 
     protected readonly MessageRegistry MsgRegistry;
 
-    public TradingSocketClientAbstract(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer)
+    public TradingSocketClientAbstract(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer, HttpClient httpClient)
     {
         EventDispatcher = eventDispatcher;
         MsgIndexer = indexer;
         MsgRegistry = msgRegistry;
         _webSocket = new ClientWebSocket();
+        _httpClient = httpClient;
         ClientId = connectionConfig.ClientId;
         ClientSecret = connectionConfig.ClientSecret;
         _wsUrl = connectionConfig.WsUrl;
+        RestApiUrl = connectionConfig.RestApiUrl;
         _connectionCancellationTokenSource = new CancellationTokenSource();
         _receivingCancellationTokenSource = new CancellationTokenSource();
     }
@@ -159,6 +164,9 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
 
     protected abstract Task OnNewMessage(JToken? data, string args, int id);
 
+    public abstract Task GetInstrumentsByType(string primaryCurrency, InstrumentType? instrumentType,
+        CancellationToken cancellationToken);
+
     private void ResetWebsocket()
     {
         _webSocket.Dispose();
@@ -196,6 +204,14 @@ public abstract class TradingSocketClientAbstract : ITradingSocketClient
         _connectionCancellationTokenSource?.Cancel();
         ResetWebsocket();
         Log.Information("Socket {ClientName} client stopped", GetClientName());
+    }
+
+    protected async Task<string?> SendGetRequestAsync(string endpoint, CancellationToken cancellationToken)
+    {
+        var response = await _httpClient.GetAsync(endpoint, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync(cancellationToken);
     }
     
 }

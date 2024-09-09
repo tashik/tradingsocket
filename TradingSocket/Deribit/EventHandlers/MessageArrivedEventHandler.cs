@@ -39,7 +39,7 @@ public class MessageArrivedEventHandler : IDomainEventHandler<MessageArrivedEven
                 }
                 // Handle other data types similarly
                 break;
-            case SocketRequest.GetInstrument:
+            case SocketRequest.InstrumentList:
                 break;
         }
 

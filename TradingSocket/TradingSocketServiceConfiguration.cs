@@ -31,6 +31,8 @@ public class TradingSocketServiceConfiguration
         serviceCollection.AddSingleton<MessageRegistry>();
         serviceCollection.AddSingleton<MessageIndexer>();
         
+        serviceCollection.AddHttpClient();
+        
         var connectorSettings = _configuration.GetSection("ConnectorSettings").Get<List<ConnectionConfig>>();
         if (connectorSettings == null)
         {
@@ -40,6 +42,8 @@ public class TradingSocketServiceConfiguration
         var clients = new Dictionary<ExchangeType, ITradingSocketClient>();
         var messageIndexer = serviceCollection.BuildServiceProvider().GetRequiredService<MessageIndexer>();
         var messageRegistry = serviceCollection.BuildServiceProvider().GetRequiredService<MessageRegistry>();
+        var httpClientFactory = serviceCollection.BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient();
 
         foreach (var setting in connectorSettings)
         {
@@ -47,11 +51,11 @@ public class TradingSocketServiceConfiguration
             {
                 case "deribit":
                     serviceCollection.AddTransient<IDomainEventHandler<DeribitEventHandlers.MessageArrivedEvent>, DeribitEventHandlers.MessageArrivedEventHandler>();
-                    clients.Add(ExchangeType.Deribit, new DeribitSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer));
+                    clients.Add(ExchangeType.Deribit, new DeribitSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer, httpClient));
                     break;
                 case "okx":
                     serviceCollection.AddTransient<IDomainEventHandler<OkxEventHandlers.MessageArrivedEvent>, OkxEventHandlers.MessageArrivedEventHandler>();
-                    clients.Add(ExchangeType.Okx, new OkxSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer));
+                    clients.Add(ExchangeType.Okx, new OkxSocketClient(setting, serviceCollection.BuildServiceProvider().GetRequiredService<TradingSocketEventDispatcher>(), messageRegistry, messageIndexer, httpClient));
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported exchange: {setting.Exchange}");

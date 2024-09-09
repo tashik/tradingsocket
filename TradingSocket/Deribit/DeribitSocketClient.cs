@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using Serilog;
 using TradingSocket.Entities;
 using TradingSocket.Helpers;
+using TradingSocketEvents.Domain;
 using DeribitEventHandlers = TradingSocket.Deribit.EventHandlers;
 
 namespace TradingSocket.Deribit;
@@ -11,7 +12,8 @@ public class DeribitSocketClient : TradingSocketClientAbstract
     
     private string? _accessToken;
 
-    public DeribitSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer) : base(connectionConfig, eventDispatcher, msgRegistry, indexer)
+    public DeribitSocketClient(ConnectionConfig connectionConfig, TradingSocketEventDispatcher eventDispatcher, MessageRegistry msgRegistry, MessageIndexer indexer, HttpClient httpClient) 
+        : base(connectionConfig, eventDispatcher, msgRegistry, indexer, httpClient)
     {
     }
 
@@ -108,5 +110,46 @@ public class DeribitSocketClient : TradingSocketClientAbstract
         };
        
         await EventDispatcher.DispatchAsync(new DeribitEventHandlers.MessageArrivedEvent(jReq));
+    }
+
+    public override async Task GetInstrumentsByType(string primaryCurrency, InstrumentType? instrumentType, CancellationToken cancellationToken)
+    {
+        var type = "";
+        if (instrumentType != null)
+        {
+            switch (instrumentType)
+            {
+                case InstrumentType.Futures:
+                    type = "future";
+                    break;
+                case InstrumentType.Option:
+                    type = "option";
+                    break;
+                case InstrumentType.Spot:
+                    type = "spot";
+                    break;
+                default:
+                    throw new Exception("Unsupported instrument type");
+            }
+        }
+
+        var reqParams = $"currency={primaryCurrency}&expired=false";
+        if (type != "")
+        {
+            reqParams += $"&kind={type}";
+        }
+        var endpoint = $"{RestApiUrl}/public/get_instruments?{reqParams}";
+        var content = await SendGetRequestAsync(endpoint, cancellationToken);
+        if (content != null)
+        {
+            var jDoc = JObject.Parse(content);
+            var jMessage = new SocketResponse()
+            {
+                Args = reqParams,
+                DataObject = jDoc["result"],
+                RequestType = SocketRequest.InstrumentList
+            };
+            await EventDispatcher.DispatchAsync(new DeribitEventHandlers.MessageArrivedEvent(jMessage)); 
+        }
     }
 }

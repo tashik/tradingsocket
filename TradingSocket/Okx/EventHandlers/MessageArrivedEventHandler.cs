@@ -19,9 +19,8 @@ public class MessageArrivedEventHandler : IDomainEventHandler<MessageArrivedEven
             case SocketRequest.Authenticate:
                 break;
             case SocketRequest.Subscribe:
-                
                 break;
-            case SocketRequest.GetInstrument:
+            case SocketRequest.InstrumentList:
                 break;
         }
 
