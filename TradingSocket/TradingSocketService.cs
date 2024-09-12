@@ -2,10 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Serilog;
 using TradingSocket.Deribit;
-using TradingSocket.Deribit.Entities;
 using TradingSocket.Deribit.Factories;
 using TradingSocket.Entities;
 using TradingSocketEvents;
+using TradingSocketEvents.Domain;
 
 namespace TradingSocket;
 

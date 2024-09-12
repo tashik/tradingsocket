@@ -5,6 +5,7 @@ using Serilog;
 using TradingSocket.Deribit;
 using TradingSocket;
 using TradingSocket.Entities;
+using TradingSocketEvents.Domain;
 
 class Program
 {

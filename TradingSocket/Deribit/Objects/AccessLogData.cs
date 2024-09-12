@@ -1,9 +1,7 @@
-using Newtonsoft.Json;
-
-namespace TradingSocket.Deribit.Entities;
+namespace TradingSocket.Deribit.Objects;
 
 
-public class AccessLogData : ISubscriptionData
+public class AccessLogData : DeribitSocketObjectBase, ISubscriptionData
 {
     public long Timestamp { get; set; }
     public string? Log { get; set; }

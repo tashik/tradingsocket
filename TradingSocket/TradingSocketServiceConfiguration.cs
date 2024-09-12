@@ -8,6 +8,7 @@ using TradingSocket.Entities;
 using TradingSocket.Helpers;
 using TradingSocket.Okx;
 using TradingSocketEvents;
+using TradingSocketEvents.Domain;
 
 namespace TradingSocket;
 

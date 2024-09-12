@@ -146,7 +146,7 @@ public class DeribitSocketClient : TradingSocketClientAbstract
             var jMessage = new SocketResponse()
             {
                 Args = reqParams,
-                DataObject = jDoc["result"],
+                DataObject = jDoc,
                 RequestType = SocketRequest.InstrumentList
             };
             await EventDispatcher.DispatchAsync(new DeribitEventHandlers.MessageArrivedEvent(jMessage)); 

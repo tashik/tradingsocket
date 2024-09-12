@@ -1,4 +1,4 @@
-namespace TradingSocket.Deribit.Entities;
+namespace TradingSocket.Deribit.Objects;
 
 public interface ISubscriptionData
 {

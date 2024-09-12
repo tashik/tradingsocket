@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TradingSocket.Deribit.Entities;
+using TradingSocket.Deribit.Objects;
 using TradingSocket.Entities;
 
 namespace TradingSocket.Deribit.Factories;

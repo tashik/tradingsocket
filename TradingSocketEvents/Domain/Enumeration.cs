@@ -2,6 +2,14 @@ using System.ComponentModel;
 
 namespace TradingSocketEvents.Domain;
 
+public enum ExchangeType
+{
+    [Description("Deribit")]
+    Deribit,
+    [Description("Okx")]
+    Okx
+}
+
 public enum InstrumentType
 {
     [Description("Spot")]
